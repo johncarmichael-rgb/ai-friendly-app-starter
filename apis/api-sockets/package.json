@@ -1,0 +1,43 @@
+{
+  "name": "api-sockets",
+  "description": "Dedicated Socket.IO gateway subscribed to PubSub events",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "clean": "rm -rf build",
+    "build": "npm run clean && tsc && tsc-alias",
+    "dev:start": "tsc-watch --preserveWatchOutput --onSuccess 'sh -c \"npx tsc-alias && npm start\"'",
+    "start": "node ./build/server.js",
+    "lint": "eslint 'src/**/*.{js,ts,tsx}'",
+    "lint:fix": "npm run lint -- --fix",
+    "prettier": "prettier --check 'src/**/*.{js,ts,tsx,json}'",
+    "prettier:fix": "prettier --write 'src/**/*.{js,ts,tsx,json}'"
+  },
+  "dependencies": {
+    "@google-cloud/pubsub": "^5.3.1",
+    "cookie": "^1.1.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "google-auth-library": "^10.7.0",
+    "load-mongoose": "^4.0.0",
+    "mongoose": "^9.6.0",
+    "proc-env-helper": "^1.1.0",
+    "socket.io": "^4.8.3",
+    "source-map-support": "^0.5.21",
+    "tslib": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.10.1",
+    "@types/ws": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "^8.61.1",
+    "@typescript-eslint/parser": "^8.61.1",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-prettier": "^5.5.6",
+    "prettier": "^3.8.4",
+    "tsc-alias": "^1.8.17",
+    "tsc-watch": "^6.2.0",
+    "typescript": "^5.8.3"
+  }
+}

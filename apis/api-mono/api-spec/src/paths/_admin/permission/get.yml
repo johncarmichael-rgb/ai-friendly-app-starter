@@ -1,0 +1,10 @@
+parameters:
+  - $ref: ../../../components/parameters/queryOffset.yml
+  - $ref: ../../../components/parameters/queryLimitAdminOnly.yml
+  - $ref: ../../../components/parameters/querySearch.yml
+responses:
+  '200':
+    content:
+      application/json:
+        schema:
+          $ref: ../../../components/schemas/permission/models.yml

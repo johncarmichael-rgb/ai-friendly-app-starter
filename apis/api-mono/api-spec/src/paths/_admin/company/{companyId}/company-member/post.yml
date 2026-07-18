@@ -1,0 +1,14 @@
+parameters:
+  - $ref: ../../../../../components/parameters/pathCompanyId.yml
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../../components/schemas/companyMember/post.yml
+responses:
+  '200':
+    content:
+      application/json:
+        schema:
+          $ref: ../../../../../components/schemas/companyMember/model.yml

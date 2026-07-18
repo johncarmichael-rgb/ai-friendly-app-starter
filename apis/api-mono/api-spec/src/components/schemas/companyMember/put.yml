@@ -1,0 +1,12 @@
+type: object
+properties:
+  role:
+    type: string
+  status:
+    $ref: ./status/enum.yml
+  firstName:
+    type: string
+    description: First name of the user
+  lastName:
+    type: string
+    description: Last name of the user

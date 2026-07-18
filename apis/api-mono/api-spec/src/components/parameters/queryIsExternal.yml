@@ -1,0 +1,6 @@
+name: isExternal
+in: query
+required: false
+schema:
+  type: boolean
+description: Filter by external membership status (true = external users only, false = internal users only)

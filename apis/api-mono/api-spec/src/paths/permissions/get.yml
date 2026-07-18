@@ -1,0 +1,7 @@
+responses:
+  '200':
+    description: List of all available permissions
+    content:
+      application/json:
+        schema:
+          $ref: ../../components/schemas/permission/models.yml

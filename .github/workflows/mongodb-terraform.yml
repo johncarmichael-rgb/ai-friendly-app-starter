@@ -1,0 +1,161 @@
+name: MongoDB Terraform
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: 'Environment to deploy'
+        type: choice
+        options: [dev, qa, prod]
+        required: true
+        default: 'dev'
+      terraform_action:
+        description: 'Terraform action to perform'
+        type: choice
+        options: [plan, apply]
+        required: true
+        default: 'plan'
+
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'deploy/mongodb/terraform/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan (${{ matrix.env || inputs.env }})
+    runs-on: [self-hosted, '${{ matrix.env || inputs.env }}']
+    strategy:
+      matrix:
+        env: >-
+          ${{
+            github.event_name == 'pull_request' && github.base_ref == 'main' && fromJSON('["dev", "prod"]')
+            || github.event_name == 'pull_request' && github.base_ref == 'develop' && fromJSON('["dev"]')
+            || github.event_name == 'workflow_dispatch' && fromJSON(format('["{0}"]', inputs.env))
+          }}
+      fail-fast: false
+    env:
+      TF_ENV: ${{ matrix.env || inputs.env }}
+
+    steps:
+      - name: Validate Branch
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          if [[ "${{ github.ref }}" != "refs/heads/develop" && "${{ github.ref }}" != "refs/heads/main" ]]; then
+            echo "Error: Workflow can only run from develop or main branch"
+            echo "Current branch: ${{ github.ref }}"
+            exit 1
+          fi
+
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Setup GCP Credentials
+        uses: 'google-github-actions/auth@v3'
+        with:
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+          project_id: "cera-management"
+
+      - name: Terraform Init
+        working-directory: ./deploy/mongodb/terraform
+        run: |
+          source ~/.bash_profile
+          tfenv use
+
+          terraform init \
+            -backend-config="prefix=environments/${{ env.TF_ENV }}/cera-weave/mongodb-infrastructure"
+
+      - name: Terraform Plan
+        working-directory: ./deploy/mongodb/terraform
+        env:
+          TF_VAR_mongodb_atlas_public_key: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+          TF_VAR_mongodb_atlas_private_key: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+        run: |
+          source ~/.bash_profile
+          tfenv use
+
+          terraform plan -no-color -input=false \
+            -var="repo_name=${{ github.event.repository.name }}" \
+            -var-file="envs/${{ env.TF_ENV }}.tfvars" \
+            -out=${{ env.TF_ENV }}-plan.tfplan
+
+      - name: Upload Plan Artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ env.TF_ENV }}-terraform-plan
+          path: ./deploy/mongodb/terraform/${{ env.TF_ENV }}-plan.tfplan
+          retention-days: 5
+
+  terraform-apply:
+    name: Terraform Apply (${{ inputs.env }})
+    needs: [terraform-plan]
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.terraform_action == 'apply' }}
+    runs-on: [self-hosted, '${{ inputs.env }}']
+    environment: ${{ inputs.env }}
+    env:
+      TF_ENV: ${{ inputs.env }}
+
+    steps:
+      - name: Validate Branch
+        run: |
+          if [[ "${{ github.ref }}" != "refs/heads/develop" && "${{ github.ref }}" != "refs/heads/main" ]]; then
+            echo "Error: Workflow can only run from develop or main branch"
+            echo "Current branch: ${{ github.ref }}"
+            exit 1
+          fi
+
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Setup GCP Credentials
+        uses: 'google-github-actions/auth@v3'
+        with:
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+          project_id: "cera-management"
+
+      - name: Terraform Init
+        working-directory: ./deploy/mongodb/terraform
+        run: |
+          source ~/.bash_profile
+          tfenv use
+
+          terraform init \
+            -backend-config="prefix=environments/${{ env.TF_ENV }}/cera-weave/mongodb-infrastructure"
+
+      - name: Download Plan Artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ env.TF_ENV }}-terraform-plan
+          path: ./deploy/mongodb/terraform/
+
+      - name: Terraform Apply
+        working-directory: ./deploy/mongodb/terraform
+        env:
+          TF_VAR_mongodb_atlas_public_key: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+          TF_VAR_mongodb_atlas_private_key: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+        run: |
+          source ~/.bash_profile
+          tfenv use
+
+          terraform apply -no-color -input=false -auto-approve \
+            ${{ env.TF_ENV }}-plan.tfplan
+
+      - name: Terraform Output
+        working-directory: ./deploy/mongodb/terraform
+        env:
+          TF_VAR_mongodb_atlas_public_key: ${{ secrets.MONGODB_ATLAS_PUBLIC_KEY }}
+          TF_VAR_mongodb_atlas_private_key: ${{ secrets.MONGODB_ATLAS_PRIVATE_KEY }}
+        run: |
+          source ~/.bash_profile
+          tfenv use
+
+          echo "::notice title=MongoDB Deployed::MongoDB cluster has been successfully deployed"
+          terraform output -no-color mongodb_project_name
+          terraform output -no-color mongodb_cluster_name
+          terraform output -no-color mongodb_cluster_state
+          terraform output -no-color gcp_secret_host

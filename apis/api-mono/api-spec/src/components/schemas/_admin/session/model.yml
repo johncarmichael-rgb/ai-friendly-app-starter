@@ -1,0 +1,39 @@
+type: object
+required:
+  - _id
+  - sessionId
+  - userId
+  - userRoles
+  - expiresAt
+  - createdAt
+  - updatedAt
+properties:
+  _id:
+    type: string
+    format: uuid
+  sessionId:
+    type: string
+    description: Unique session identifier
+  userId:
+    type: string
+    format: uuid
+  userRoles:
+    type: array
+    items:
+      type: string
+  expiresAt:
+    type: string
+    format: date-time
+  ipAddress:
+    type: string
+  userAgent:
+    type: string
+  lastAccessedAt:
+    type: string
+    format: date-time
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time

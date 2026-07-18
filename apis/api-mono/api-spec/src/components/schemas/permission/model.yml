@@ -1,0 +1,23 @@
+type: object
+required:
+  - _id
+  - code
+  - name
+  - isCustom
+properties:
+  _id:
+    type: string
+    format: uuid
+    description: Unique identifier for the permission
+  code:
+    type: string
+    description: Unique permission code (e.g., 'apiCompanyRead')
+  name:
+    type: string
+    description: Human-readable name of the permission (e.g., 'Api Company Read')
+  group:
+    type: string
+    description: Group name for organizing permissions (e.g., 'Company Management', 'User Management')
+  isCustom:
+    type: boolean
+    description: Whether this is a custom permission (true) or derived from OpenAPI spec (false). Custom permissions can be deleted, OpenAPI-derived ones cannot.

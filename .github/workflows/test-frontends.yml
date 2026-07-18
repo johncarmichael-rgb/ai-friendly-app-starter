@@ -1,0 +1,24 @@
+name: Test Frontends
+
+on:
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'frontends/admin/**'
+      - 'frontends/user-main/**'
+      - 'frontends/services/**'
+      - 'frontends/apis/**'
+      - '.github/workflows/test-frontends.yml'
+      - '.github/workflows/_test.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: test-frontends-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Run Frontend Tests
+    uses: ./.github/workflows/_test.yml
+    with:
+      test_frontends: true

@@ -1,0 +1,170 @@
+name: Docker build + push (multi-env)
+
+# Single reusable: builds image once, pushes to one or more env registries.
+# WIF-only. Used by v2 deploy workflows (deploy-weave-apps.yml, etc.).
+# v1 reusables (_build.yml + _push.yml) coexist and are not affected.
+
+on:
+  workflow_call:
+    inputs:
+      run_id:
+        required: true
+        type: string
+      working_directory:
+        description: "Build context"
+        type: string
+        default: "."
+      dockerfile:
+        description: "Path to Dockerfile"
+        required: true
+        type: string
+      imagename:
+        description: "Image name (without registry / tag)"
+        required: true
+        type: string
+      environments:
+        description: 'JSON array of envs to push to, e.g. ["dev"] or ["dev","prod"]. Push step is skipped on pull_request events.'
+        required: true
+        type: string
+      registry:
+        description: "Docker registry host"
+        type: string
+        default: "europe-west2-docker.pkg.dev"
+      runner:
+        description: "Self-hosted runner label for build"
+        type: string
+        default: "dev"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ${{ inputs.runner }}
+    name: Build ${{ inputs.imagename }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build
+        id: build
+        run: |
+          docker buildx build ${{ inputs.working_directory }} \
+            -f ${{ inputs.dockerfile }} \
+            -t ${{ inputs.imagename }}_${{ inputs.run_id }}
+
+      - name: Save image
+        if: github.event_name != 'pull_request'
+        run: |
+          docker save ${{ inputs.imagename }}_${{ inputs.run_id }} \
+            -o ${{ runner.temp }}/${{ inputs.imagename }}-${{ inputs.run_id }}.tar
+
+      - name: Upload artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ inputs.imagename }}
+          path: ${{ runner.temp }}/${{ inputs.imagename }}-${{ inputs.run_id }}.tar
+          retention-days: 1
+          include-hidden-files: true
+          compression-level: 0
+
+      - name: Build summary
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.build.outcome }}" = "success" ]; then
+            RESULT="✅ Built"
+          else
+            RESULT="❌ Build failed"
+          fi
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            ARTIFACT="not uploaded (PR validation)"
+          else
+            ARTIFACT="\`${{ inputs.imagename }}\` uploaded"
+          fi
+
+          {
+            echo "### 🐳 Docker Build — \`${{ inputs.imagename }}\`"
+            echo ""
+            echo "- **Context**: \`${{ inputs.working_directory }}\`"
+            echo "- **Dockerfile**: \`${{ inputs.dockerfile }}\`"
+            echo "- **Tag**: \`${{ inputs.imagename }}_${{ inputs.run_id }}\`"
+            echo "- **Artifact**: ${ARTIFACT}"
+            echo "- **Result**: ${RESULT}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  push:
+    needs: [build]
+    if: github.event_name != 'pull_request'
+    runs-on: ${{ matrix.environment }}
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ${{ fromJSON(inputs.environments) }}
+    name: Push ${{ inputs.imagename }} -> ${{ matrix.environment }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: ${{ inputs.imagename }}
+          path: ${{ runner.temp }}
+          run-id: ${{ inputs.run_id }}
+
+      - name: Setup GCP Credentials
+        uses: google-github-actions/auth@v3
+        with:
+          create_credentials_file: true
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: sa-ci-cd@cera-management.iam.gserviceaccount.com
+          project_id: cera-management
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Push
+        id: push
+        env:
+          IMAGE_REGISTRY: ${{ inputs.registry }}/cera-${{ matrix.environment }}-shared/cera/${{ matrix.environment }}_${{ inputs.imagename }}
+        run: |
+          if ! test -f ${{ runner.temp }}/${{ inputs.imagename }}-${{ inputs.run_id }}.tar; then
+            echo "image ${{ runner.temp }}/${{ inputs.imagename }}-${{ inputs.run_id }}.tar not found"
+            exit 1
+          fi
+
+          docker load -i ${{ runner.temp }}/${{ inputs.imagename }}-${{ inputs.run_id }}.tar
+          docker image tag ${{ inputs.imagename }}_${{ inputs.run_id }} ${IMAGE_REGISTRY}:${{ inputs.run_id }}
+          docker image tag ${{ inputs.imagename }}_${{ inputs.run_id }} ${IMAGE_REGISTRY}:latest
+
+          # Isolated docker config to avoid shared-runner conflicts
+          DOCKER_CONFIG="$(mktemp -d)"
+          export DOCKER_CONFIG
+
+          gcloud auth print-access-token \
+            --impersonate-service-account=sa-terraform@cera-${{ matrix.environment }}-shared.iam.gserviceaccount.com \
+            | docker --config "$DOCKER_CONFIG" login -u oauth2accesstoken --password-stdin ${{ inputs.registry }}
+
+          docker --config "$DOCKER_CONFIG" push ${IMAGE_REGISTRY}:${{ inputs.run_id }}
+          docker --config "$DOCKER_CONFIG" push ${IMAGE_REGISTRY}:latest
+
+          rm -rf "$DOCKER_CONFIG"
+
+      - name: Push summary
+        if: always()
+        shell: bash
+        env:
+          IMAGE_REGISTRY: ${{ inputs.registry }}/cera-${{ matrix.environment }}-shared/cera/${{ matrix.environment }}_${{ inputs.imagename }}
+        run: |
+          if [ "${{ steps.push.outcome }}" = "success" ]; then
+            RESULT="✅ Pushed"
+          else
+            RESULT="❌ Push failed"
+          fi
+
+          {
+            echo "### 📤 Docker Push — \`${{ inputs.imagename }}\` -> \`${{ matrix.environment }}\`"
+            echo ""
+            echo "- **Registry**: \`${IMAGE_REGISTRY}\`"
+            echo "- **Tags**: \`${{ inputs.run_id }}\`, \`latest\`"
+            echo "- **Result**: ${RESULT}"
+          } >> "$GITHUB_STEP_SUMMARY"

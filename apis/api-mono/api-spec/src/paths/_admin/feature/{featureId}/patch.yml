@@ -1,0 +1,14 @@
+parameters:
+  - $ref: ../../../../components/parameters/pathFeatureId.yml
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../components/schemas/feature/patch.yml
+responses:
+  '200':
+    content:
+      application/json:
+        schema:
+          $ref: ../../../../components/schemas/feature/model.yml

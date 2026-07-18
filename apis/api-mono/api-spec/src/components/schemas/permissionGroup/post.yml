@@ -1,0 +1,11 @@
+type: object
+required:
+  - oldName
+  - newName
+properties:
+  oldName:
+    type: string
+    description: The current name of the permission group to rename
+  newName:
+    type: string
+    description: The new name for the permission group

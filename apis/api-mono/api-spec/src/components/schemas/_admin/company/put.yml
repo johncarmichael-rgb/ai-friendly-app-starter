@@ -1,0 +1,9 @@
+allOf:
+  - $ref: ../../company/put.yml
+  - type: object
+    properties:
+      domains:
+        type: array
+        description: Email domains associated with this company. Raw editing is super-admin only; tenants must use the domain-verification flow.
+        items:
+          type: string

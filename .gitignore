@@ -1,0 +1,92 @@
+# keep files
+!.gitkeep
+
+# docker
+docker-data
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage
+*.lcov
+
+# node_modules
+node_modules/
+*/node_modules/
+
+# PNPM
+.pnpm-store/
+.pnpm-debug.log*
+
+# Output of 'npm pack'
+*.tgz
+
+# dotenv environment variable files
+.env
+.env.local
+.env.*.local
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Build outputs
+dist/
+build/
+# API-spec source folders for /app-builder/build endpoints — these are spec
+# sources, not build outputs; without these negations the blanket build/ rule
+# silently drops them (which is how the endpoint's src went missing from git).
+!apis/api-mono/api-spec/src/paths/app-builder/build/
+!apis/api-mono/api-spec/src/components/schemas/app-builder/build/
+
+# TypeScript
+*.tsbuildinfo
+
+# Temporary folders
+tmp/
+temp/
+
+# Local development
+.local
+
+# Local HTTPS certificates (generated per-machine via mkcert)
+nginx/tmp-certs/*.pem
+
+# Storybook build outputs
+storybook-static/
+
+# Jest
+coverage/
+
+# claude in a box cache
+.claude-box/
+
+# generate it cache
+apis/api-mono/api/.openapi-nodegen/

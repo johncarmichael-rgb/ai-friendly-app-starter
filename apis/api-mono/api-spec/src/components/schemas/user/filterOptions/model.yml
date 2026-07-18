@@ -1,0 +1,15 @@
+type: object
+required:
+  - domains
+  - roles
+properties:
+  domains:
+    type: array
+    description: Distinct email domains across all users, sorted alphabetically
+    items:
+      type: string
+  roles:
+    type: array
+    description: Distinct system roles across all users, sorted alphabetically
+    items:
+      type: string

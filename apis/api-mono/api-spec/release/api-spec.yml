@@ -1,0 +1,1797 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: api-mono
+servers:
+  - url: /api
+    description: API endpoints (all routes prefixed with /api)
+paths:
+  /_admin/company:
+    get:
+      tags:
+        - _admin
+      summary: Get company, from _admin
+      operationId: adminCompanyGet
+      parameters:
+        - $ref: '#/components/parameters/QueryOffset'
+        - $ref: '#/components/parameters/QueryLimit'
+        - $ref: '#/components/parameters/QuerySearch'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Companys'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminCompanyRead
+    post:
+      tags:
+        - _admin
+      summary: Create a company, from _admin
+      operationId: adminCompanyPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyPost'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+        '422':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminCompanyCreate
+  /_admin/company/{companyId}/company-member:
+    get:
+      tags:
+        - _admin
+      summary: Get company-member, from company {companyId}, from _admin
+      operationId: adminCompanyCompanyIdCompanyMemberGet
+      parameters:
+        - $ref: '#/components/parameters/PathCompanyId'
+        - $ref: '#/components/parameters/QueryOffset'
+        - $ref: '#/components/parameters/QueryLimit'
+        - $ref: '#/components/parameters/QuerySearch'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyMemberWithUsers'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminCompanyCompanyIdCompanyMemberRead
+    post:
+      tags:
+        - _admin
+      summary: Create a company-member, from company {companyId}, from _admin
+      operationId: adminCompanyCompanyIdCompanyMemberPost
+      parameters:
+        - $ref: '#/components/parameters/PathCompanyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyMemberBaseAttributes'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyMember'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+        '422':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminCompanyCompanyIdCompanyMemberCreate
+  /_admin/company/{companyId}/company-member/{companyMemberId}:
+    delete:
+      tags:
+        - _admin
+      summary: Delete a company-member based on {companyMemberId}, from company {companyId}, from _admin
+      operationId: adminCompanyCompanyIdCompanyMemberCompanyMemberIdDelete
+      parameters:
+        - $ref: '#/components/parameters/PathCompanyId'
+        - $ref: '#/components/parameters/PathCompanyMemberId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminCompanyCompanyIdCompanyMemberCompanyMemberIdDelete
+    get:
+      tags:
+        - _admin
+      summary: Get company-member based on {companyMemberId}, from company {companyId}, from _admin
+      operationId: adminCompanyCompanyIdCompanyMemberCompanyMemberIdGet
+      parameters:
+        - $ref: '#/components/parameters/PathCompanyId'
+        - $ref: '#/components/parameters/PathCompanyMemberId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyMember'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminCompanyCompanyIdCompanyMemberCompanyMemberIdRead
+    put:
+      tags:
+        - _admin
+      summary: Update a company-member based on {companyMemberId}, from company {companyId}, from _admin
+      operationId: adminCompanyCompanyIdCompanyMemberCompanyMemberIdPut
+      parameters:
+        - $ref: '#/components/parameters/PathCompanyId'
+        - $ref: '#/components/parameters/PathCompanyMemberId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyMemberPut'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyMember'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminCompanyCompanyIdCompanyMemberCompanyMemberIdUpdate
+  /_admin/company/{companyId}/feature-codes:
+    get:
+      tags:
+        - _admin
+      summary: Get feature-codes, from company {companyId}, from _admin
+      operationId: adminCompanyCompanyIdFeatureCodesGet
+      parameters:
+        - $ref: '#/components/parameters/PathCompanyId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyFeatureCodes'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminCompanyCompanyIdFeatureCodesRead
+    put:
+      tags:
+        - _admin
+      summary: Update a feature-codes, from company {companyId}, from _admin
+      operationId: adminCompanyCompanyIdFeatureCodesPut
+      parameters:
+        - $ref: '#/components/parameters/PathCompanyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCompanyFeatureCodesPut'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyFeatureCodes'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminCompanyCompanyIdFeatureCodesUpdate
+  /_admin/company/{companyId}/feature-codes/{featureCode}:
+    delete:
+      tags:
+        - _admin
+      summary: Delete a feature-codes based on {featureCode}, from company {companyId}, from _admin
+      operationId: adminCompanyCompanyIdFeatureCodesFeatureCodeDelete
+      parameters:
+        - $ref: '#/components/parameters/PathCompanyId'
+        - $ref: '#/components/parameters/PathFeatureCode'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyFeatureCodes'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminCompanyCompanyIdFeatureCodesFeatureCodeDelete
+    post:
+      tags:
+        - _admin
+      summary: Create a feature-codes based on {featureCode}, from company {companyId}, from _admin
+      operationId: adminCompanyCompanyIdFeatureCodesFeatureCodePost
+      parameters:
+        - $ref: '#/components/parameters/PathCompanyId'
+        - $ref: '#/components/parameters/PathFeatureCode'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyFeatureCodes'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+        '422':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminCompanyCompanyIdFeatureCodesFeatureCodeCreate
+  /_admin/company/{companyId}:
+    get:
+      tags:
+        - _admin
+      summary: Get company based on {companyId}, from _admin
+      operationId: adminCompanyCompanyIdGet
+      parameters:
+        - $ref: '#/components/parameters/PathCompanyId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminCompanyCompanyIdRead
+    put:
+      tags:
+        - _admin
+      summary: Update a company based on {companyId}, from _admin
+      operationId: adminCompanyCompanyIdPut
+      parameters:
+        - $ref: '#/components/parameters/PathCompanyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCompanyPut'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminCompanyCompanyIdUpdate
+  /_admin/company/{companyId}/role/{roleName}/reset:
+    post:
+      tags:
+        - _admin
+      summary: Create a reset, from role {roleName}, from company {companyId}, from _admin
+      operationId: adminCompanyCompanyIdRoleRoleNameResetPost
+      parameters:
+        - $ref: '#/components/parameters/PathCompanyId'
+        - $ref: '#/components/parameters/PathRoleName'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+        '422':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminCompanyCompanyIdRoleRoleNameResetCreate
+  /_admin/feature:
+    get:
+      tags:
+        - _admin
+      summary: Get feature, from _admin
+      operationId: adminFeatureGet
+      parameters:
+        - $ref: '#/components/parameters/QueryOffset'
+        - $ref: '#/components/parameters/QueryLimit'
+        - $ref: '#/components/parameters/QuerySearch'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Features'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminFeatureRead
+  /_admin/feature/{featureId}:
+    delete:
+      tags:
+        - _admin
+      summary: Delete a feature based on {featureId}, from _admin
+      operationId: adminFeatureFeatureIdDelete
+      parameters:
+        - $ref: '#/components/parameters/PathFeatureId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericDeleteSuccess'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminFeatureFeatureIdDelete
+    get:
+      tags:
+        - _admin
+      summary: Get feature based on {featureId}, from _admin
+      operationId: adminFeatureFeatureIdGet
+      parameters:
+        - $ref: '#/components/parameters/PathFeatureId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feature'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminFeatureFeatureIdRead
+    patch:
+      tags:
+        - _admin
+      summary: Update part of a feature based on {featureId}, from _admin
+      operationId: adminFeatureFeatureIdPatch
+      parameters:
+        - $ref: '#/components/parameters/PathFeatureId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeaturePatch'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feature'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+        '422':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminFeatureFeatureIdUpdate
+  /_admin/permission:
+    get:
+      tags:
+        - _admin
+      summary: Get permission, from _admin
+      operationId: adminPermissionGet
+      parameters:
+        - $ref: '#/components/parameters/QueryOffset'
+        - $ref: '#/components/parameters/QueryLimitAdminOnly'
+        - $ref: '#/components/parameters/QuerySearch'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permissions'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminPermissionRead
+    post:
+      tags:
+        - _admin
+      summary: Create a permission, from _admin
+      operationId: adminPermissionPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionPost'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+        '422':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminPermissionCreate
+  /_admin/permission/{permissionId}:
+    delete:
+      tags:
+        - _admin
+      summary: Delete a permission based on {permissionId}, from _admin
+      operationId: adminPermissionPermissionIdDelete
+      parameters:
+        - $ref: '#/components/parameters/PathPermissionId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericDeleteSuccess'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminPermissionPermissionIdDelete
+    get:
+      tags:
+        - _admin
+      summary: Get permission based on {permissionId}, from _admin
+      operationId: adminPermissionPermissionIdGet
+      parameters:
+        - $ref: '#/components/parameters/PathPermissionId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminPermissionPermissionIdRead
+    patch:
+      tags:
+        - _admin
+      summary: Update part of a permission based on {permissionId}, from _admin
+      operationId: adminPermissionPermissionIdPatch
+      parameters:
+        - $ref: '#/components/parameters/PathPermissionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionPatch'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+        '422':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminPermissionPermissionIdUpdate
+  /_admin/permission-group/rename:
+    post:
+      tags:
+        - _admin
+      summary: Create a rename, from permission-group, from _admin
+      operationId: adminPermissionGroupRenamePost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionGroupPost'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionGroup'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+        '422':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminPermissionGroupRenameCreate
+  /_admin/user-filter-options:
+    get:
+      tags:
+        - _admin
+      summary: Get user-filter-options, from _admin
+      operationId: adminUserFilterOptionsGet
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserFilterOptions'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminUserFilterOptionsRead
+  /_admin/users:
+    get:
+      tags:
+        - _admin
+      summary: Get users, from _admin
+      operationId: adminUsersGet
+      parameters:
+        - $ref: '#/components/parameters/QueryOffset'
+        - $ref: '#/components/parameters/QueryLimit'
+        - $ref: '#/components/parameters/QuerySearch'
+        - $ref: '#/components/parameters/QueryCompanyId'
+        - $ref: '#/components/parameters/QueryDomain'
+        - $ref: '#/components/parameters/QueryRole'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Users'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminUsersRead
+  /_admin/users/{userId}:
+    get:
+      tags:
+        - _admin
+      summary: Get users based on {userId}, from _admin
+      operationId: adminUsersUserIdGet
+      parameters:
+        - $ref: '#/components/parameters/PathUserId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminUsersUserIdRead
+  /_admin/users/{userId}/roles:
+    put:
+      tags:
+        - _admin
+      summary: Update a roles, from users {userId}, from _admin
+      operationId: adminUsersUserIdRolesPut
+      parameters:
+        - $ref: '#/components/parameters/PathUserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRolesPut'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminUsersUserIdRolesUpdate
+  /_admin/users/{userId}/sessions:
+    delete:
+      tags:
+        - _admin
+      summary: Delete a sessions, from users {userId}, from _admin
+      operationId: adminUsersUserIdSessionsDelete
+      parameters:
+        - $ref: '#/components/parameters/PathUserId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericDeleteSuccess'
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminUsersUserIdSessionsDelete
+    get:
+      tags:
+        - _admin
+      summary: Get sessions, from users {userId}, from _admin
+      operationId: adminUsersUserIdSessionsGet
+      parameters:
+        - $ref: '#/components/parameters/PathUserId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminSession'
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - isSuperAdmin
+      x-passRequest: true
+      x-permission: apiAdminUsersUserIdSessionsRead
+  /company-member/{companyId}:
+    get:
+      tags:
+        - Company-member
+      summary: Get company-member based on {companyId}
+      operationId: companyMemberCompanyIdGet
+      parameters:
+        - $ref: '#/components/parameters/PathCompanyId'
+        - $ref: '#/components/parameters/QueryOffset'
+        - $ref: '#/components/parameters/QueryLimit'
+        - $ref: '#/components/parameters/QuerySearch'
+        - $ref: '#/components/parameters/QueryRole'
+        - $ref: '#/components/parameters/QueryStatus'
+        - $ref: '#/components/parameters/QueryIsExternal'
+        - $ref: '#/components/parameters/QueryUserId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyMemberWithUsers'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - companyCheck
+      x-passRequest: true
+      x-permission: apiCompanyMemberCompanyIdRead
+    post:
+      tags:
+        - Company-member
+      summary: Create a company-member based on {companyId}
+      operationId: companyMemberCompanyIdPost
+      parameters:
+        - $ref: '#/components/parameters/PathCompanyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyMemberBaseAttributes'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyMember'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+        '422':
+          description: Not Acceptable
+      x-async-validators:
+        - companyCheck
+      x-passRequest: true
+      x-permission: apiCompanyMemberCompanyIdCreate
+  /company-member/{companyId}/{companyMemberId}:
+    delete:
+      tags:
+        - Company-member
+      summary: Delete a {companyId} based on {companyMemberId}, from company-member
+      operationId: companyMemberCompanyIdCompanyMemberIdDelete
+      parameters:
+        - $ref: '#/components/parameters/PathCompanyId'
+        - $ref: '#/components/parameters/PathCompanyMemberId'
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - companyCheck
+      x-passRequest: true
+      x-permission: apiCompanyMemberCompanyIdCompanyMemberIdDelete
+    get:
+      tags:
+        - Company-member
+      summary: Get {companyId} based on {companyMemberId}, from company-member
+      operationId: companyMemberCompanyIdCompanyMemberIdGet
+      parameters:
+        - $ref: '#/components/parameters/PathCompanyId'
+        - $ref: '#/components/parameters/PathCompanyMemberId'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyMember'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - companyCheck
+      x-passRequest: true
+      x-permission: apiCompanyMemberCompanyIdCompanyMemberIdRead
+    put:
+      tags:
+        - Company-member
+      summary: Update a {companyId} based on {companyMemberId}, from company-member
+      operationId: companyMemberCompanyIdCompanyMemberIdPut
+      parameters:
+        - $ref: '#/components/parameters/PathCompanyId'
+        - $ref: '#/components/parameters/PathCompanyMemberId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyMemberPut'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyMember'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - companyCheck
+      x-passRequest: true
+      x-permission: apiCompanyMemberCompanyIdCompanyMemberIdUpdate
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Get health
+      operationId: healthGet
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+  /permissions:
+    get:
+      tags:
+        - Permissions
+      summary: Get permissions
+      operationId: permissionsGet
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permissions'
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - companyCheck
+      x-passRequest: true
+      x-permission: apiPermissionsRead
+  /user/current:
+    get:
+      tags:
+        - User
+      summary: Get current, from user
+      operationId: userCurrentGet
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCompany'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - companyCheck
+      x-passRequest: true
+      x-permission: apiUserCurrentRead
+    put:
+      tags:
+        - User
+      summary: Update a current, from user
+      operationId: userCurrentPut
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPut'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '406':
+          description: Not Acceptable
+      x-async-validators:
+        - companyCheck
+      x-passRequest: true
+      x-permission: apiUserCurrentUpdate
+components:
+  parameters:
+    PathCompanyId:
+      in: path
+      name: companyId
+      schema:
+        type: string
+      required: true
+      description: ID of object to fetch
+    PathCompanyMemberId:
+      in: path
+      name: companyMemberId
+      schema:
+        type: string
+      required: true
+      description: Company Member ID
+    PathFeatureCode:
+      name: featureCode
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Feature code to add or remove
+    PathFeatureId:
+      name: featureId
+      in: path
+      required: true
+      schema:
+        type: string
+    PathPermissionId:
+      name: permissionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: The unique identifier of the permission
+    PathRoleName:
+      in: path
+      name: roleName
+      schema:
+        type: string
+      required: true
+      description: Name of the role
+    PathUserId:
+      in: path
+      name: userId
+      schema:
+        type: string
+      required: true
+      description: User ID
+    QueryCompanyId:
+      in: query
+      name: companyId
+      schema:
+        type: string
+      required: false
+      description: Filter users by company ID
+    QueryDomain:
+      in: query
+      name: domain
+      required: false
+      schema:
+        type: string
+      description: Filter users by email domain (exact match, e.g. ceracare.co.uk)
+      example: ceracare.co.uk
+    QueryIsExternal:
+      name: isExternal
+      in: query
+      required: false
+      schema:
+        type: boolean
+      description: Filter by external membership status (true = external users only, false = internal users only)
+    QueryLimit:
+      in: query
+      name: limit
+      required: false
+      schema:
+        type: integer
+        default: 25
+        minimum: 0
+        maximum: 100
+      description: Max number of results returned
+    QueryLimitAdminOnly:
+      in: query
+      name: limit
+      required: false
+      schema:
+        type: integer
+        default: 25
+        minimum: 0
+        maximum: 1000
+      description: Max number of results returned
+    QueryOffset:
+      in: query
+      name: offset
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+      description: The number of items to skip before starting to collect the result set
+    QueryRole:
+      name: role
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Filter by role name
+    QuerySearch:
+      in: query
+      name: search
+      required: false
+      schema:
+        type: string
+      description: Search term
+      example: John
+    QueryStatus:
+      name: status
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - active
+          - inactive
+      description: Filter by member status
+    QueryUserId:
+      in: query
+      name: userId
+      schema:
+        type: string
+      required: false
+      description: Filter apps based on user's access permissions (role, location, etc.)
+  schemas:
+    AdminCompanyPut:
+      allOf:
+        - $ref: '#/components/schemas/CompanyPut'
+        - type: object
+          properties:
+            domains:
+              type: array
+              description: Email domains associated with this company. Raw editing is super-admin only; tenants must use the domain-verification flow.
+              items:
+                type: string
+    AdminCompanyFeatureCodes:
+      type: object
+      required:
+        - featureCodes
+      properties:
+        featureCodes:
+          type: array
+          description: List of feature codes assigned to the company
+          items:
+            type: string
+    AdminCompanyFeatureCodesPut:
+      type: object
+      required:
+        - featureCodes
+      properties:
+        featureCodes:
+          type: array
+          description: Complete list of feature codes to assign (replaces existing)
+          items:
+            type: string
+    AdminSession:
+      type: object
+      required:
+        - _id
+        - sessionId
+        - userId
+        - userRoles
+        - expiresAt
+        - createdAt
+        - updatedAt
+      properties:
+        _id:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          description: Unique session identifier
+        userId:
+          type: string
+          format: uuid
+        userRoles:
+          type: array
+          items:
+            type: string
+        expiresAt:
+          type: string
+          format: date-time
+        ipAddress:
+          type: string
+        userAgent:
+          type: string
+        lastAccessedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CompanyBaseAttributes:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        logo:
+          type: string
+        roles:
+          type: array
+          default: []
+          items:
+            type: object
+            required:
+              - name
+            properties:
+              name:
+                type: string
+                description: Display name of the role
+              description:
+                type: string
+                description: Optional description of the role's purpose and permissions
+              permissionGroups:
+                type: array
+                default: []
+                description: List of permission group names granted to this role. Groups are defined by the system owner and contain multiple individual permissions.
+                items:
+                  type: string
+                  description: Permission group name (e.g., 'Admin', 'User Management', 'Company Management')
+    Company:
+      allOf:
+        - $ref: '#/components/schemas/CompanyBaseAttributes'
+        - type: object
+          required:
+            - _id
+            - domains
+            - createdAt
+            - updatedAt
+            - createdBy
+          properties:
+            _id:
+              type: string
+            domains:
+              type: array
+              description: Verified email domains associated with this company (e.g., ['acme.com']). Added only via the domain-verification flow (or super-admin endpoints); may be empty for self-serve companies on consumer email providers.
+              items:
+                type: string
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+            createdBy:
+              type: string
+            featureCodes:
+              type: array
+              description: Feature codes assigned to this company (managed via admin endpoints only)
+              default: []
+              items:
+                type: string
+    Companys:
+      type: array
+      items:
+        $ref: '#/components/schemas/Company'
+    CompanyPost:
+      allOf:
+        - $ref: '#/components/schemas/CompanyBaseAttributes'
+        - type: object
+          required:
+            - domains
+          properties:
+            domains:
+              type: array
+              description: Email domains associated with this company (e.g., ['acme.com', 'acme.co.uk']). Super-admin create only; may be empty.
+              items:
+                type: string
+    CompanyPut:
+      allOf:
+        - $ref: '#/components/schemas/CompanyBaseAttributes'
+    CompanyMemberBaseAttributes:
+      type: object
+      required:
+        - companyId
+        - userId
+        - role
+      properties:
+        companyId:
+          type: string
+          description: Company this member belongs to
+        userId:
+          type: string
+          description: User ID of the member
+        role:
+          type: string
+          description: Role of the member in the company
+    CompanyMember:
+      allOf:
+        - $ref: '#/components/schemas/CompanyMemberBaseAttributes'
+        - type: object
+          required:
+            - _id
+            - invitedBy
+            - invitedAt
+            - status
+            - createdAt
+            - updatedAt
+          properties:
+            _id:
+              type: string
+            invitedBy:
+              type: string
+              description: User ID who invited this member
+            invitedAt:
+              type: string
+              format: date-time
+            joinedAt:
+              type: string
+              format: date-time
+            status:
+              $ref: '#/components/schemas/CompanyMemberStatusEnum'
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+            isExternal:
+              type: boolean
+              description: Whether this member was provisioned with an external (non-company-domain) email address
+              default: false
+    CompanyMemberPost:
+      $ref: '#/components/schemas/CompanyMemberBaseAttributes'
+    CompanyMemberPut:
+      type: object
+      properties:
+        role:
+          type: string
+        status:
+          $ref: '#/components/schemas/CompanyMemberStatusEnum'
+        firstName:
+          type: string
+          description: First name of the user
+        lastName:
+          type: string
+          description: Last name of the user
+    CompanyMemberStatusEnum:
+      type: string
+      enum:
+        - active
+        - inactive
+    CompanyMemberWithUser:
+      type: object
+      required:
+        - companyMember
+        - user
+      properties:
+        companyMember:
+          $ref: '#/components/schemas/CompanyMember'
+        user:
+          $ref: '#/components/schemas/User'
+    CompanyMemberWithUsers:
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        meta:
+          $ref: '#/components/schemas/GenericSearchMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanyMemberWithUser'
+    FeatureBaseAttributes:
+      type: object
+      required:
+        - code
+        - name
+      properties:
+        code:
+          type: string
+          description: Unique identifier code for the feature (e.g., 'ai_assistant', 'workflow_automation')
+        name:
+          type: string
+          description: Display name of the feature
+        description:
+          type: string
+          description: Detailed description of what the feature provides
+        isActive:
+          type: boolean
+          default: true
+          description: Whether the feature is currently available for assignment
+    Feature:
+      allOf:
+        - $ref: '#/components/schemas/FeatureBaseAttributes'
+        - type: object
+          required:
+            - _id
+            - createdAt
+            - updatedAt
+            - createdBy
+          properties:
+            _id:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+            createdBy:
+              type: string
+    Features:
+      type: array
+      items:
+        $ref: '#/components/schemas/Feature'
+    FeaturePatch:
+      type: object
+      description: Update feature properties (code cannot be changed)
+      properties:
+        name:
+          type: string
+          description: Display name of the feature
+        description:
+          type: string
+          description: Detailed description of what the feature provides
+        isActive:
+          type: boolean
+          description: Whether the feature is currently available for assignment
+    GenericDeleteSuccess:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: true
+    GenericSearchMeta:
+      type: object
+      properties:
+        totalResultCount:
+          type: number
+        offset:
+          type: number
+        limit:
+          type: number
+    Health:
+      type: object
+      properties:
+        http:
+          type: boolean
+    Permission:
+      type: object
+      required:
+        - _id
+        - code
+        - name
+        - isCustom
+      properties:
+        _id:
+          type: string
+          format: uuid
+          description: Unique identifier for the permission
+        code:
+          type: string
+          description: Unique permission code (e.g., 'apiCompanyRead')
+        name:
+          type: string
+          description: Human-readable name of the permission (e.g., 'Api Company Read')
+        group:
+          type: string
+          description: Group name for organizing permissions (e.g., 'Company Management', 'User Management')
+        isCustom:
+          type: boolean
+          description: Whether this is a custom permission (true) or derived from OpenAPI spec (false). Custom permissions can be deleted, OpenAPI-derived ones cannot.
+    Permissions:
+      type: array
+      items:
+        $ref: '#/components/schemas/Permission'
+    PermissionPatch:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Human-readable name of the permission
+        group:
+          type: string
+          description: Group name for organizing permissions (e.g., 'Company Management', 'User Management')
+    PermissionPost:
+      type: object
+      required:
+        - code
+        - name
+      properties:
+        code:
+          type: string
+          description: Unique permission code for the custom permission
+        name:
+          type: string
+          description: Human-readable name of the permission
+        group:
+          type: string
+          description: Group name for organizing permissions (e.g., 'Company Management', 'User Management')
+    PermissionGroup:
+      type: object
+      required:
+        - success
+        - permissionsUpdated
+        - companiesUpdated
+      properties:
+        success:
+          type: boolean
+          description: Whether the rename operation was successful
+        permissionsUpdated:
+          type: integer
+          description: Number of permissions that were updated with the new group name
+        companiesUpdated:
+          type: integer
+          description: Number of companies that had roles updated with the new group name
+    PermissionGroupPost:
+      type: object
+      required:
+        - oldName
+        - newName
+      properties:
+        oldName:
+          type: string
+          description: The current name of the permission group to rename
+        newName:
+          type: string
+          description: The new name for the permission group
+    UserBaseAttributes:
+      type: object
+      required:
+        - email
+        - firstName
+        - lastName
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address (from SSO provider)
+        firstName:
+          type: string
+          maxLength: 100
+          description: User's first name
+        lastName:
+          type: string
+          maxLength: 100
+          description: User's last name
+        displayName:
+          type: string
+          maxLength: 200
+          description: Full display name (optional override)
+        avatar:
+          type: string
+          format: uri
+          description: URL to user's profile picture
+    UserFilterOptions:
+      type: object
+      required:
+        - domains
+        - roles
+      properties:
+        domains:
+          type: array
+          description: Distinct email domains across all users, sorted alphabetically
+          items:
+            type: string
+        roles:
+          type: array
+          description: Distinct system roles across all users, sorted alphabetically
+          items:
+            type: string
+    User:
+      allOf:
+        - $ref: '#/components/schemas/UserBaseAttributes'
+        - type: object
+          required:
+            - _id
+            - createdAt
+            - updatedAt
+            - createdBy
+            - roles
+          properties:
+            _id:
+              type: string
+            externalId:
+              type: string
+              description: External SSO provider user ID (Google, etc.)
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+            createdBy:
+              type: string
+            previousEmails:
+              type: array
+              items:
+                type: string
+                format: email
+              default: []
+              description: Historical email addresses previously associated with this user (tracked when SSO email changes)
+            roles:
+              type: array
+              items:
+                type: string
+              default: []
+    Users:
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        meta:
+          $ref: '#/components/schemas/GenericSearchMeta'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    UserPut:
+      allOf:
+        - $ref: '#/components/schemas/UserBaseAttributes'
+    UserRolesPut:
+      type: object
+      required:
+        - roles
+      properties:
+        roles:
+          type: array
+          description: System-level roles for the user. An empty array means a standard user with no system privileges; ['SUPER_ADMIN'] grants full platform admin.
+          items:
+            type: string
+            enum:
+              - SUPER_ADMIN
+    UserCompany:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        companyMemberships:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanyMember'

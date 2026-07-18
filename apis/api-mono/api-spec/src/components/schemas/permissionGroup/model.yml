@@ -1,0 +1,15 @@
+type: object
+required:
+  - success
+  - permissionsUpdated
+  - companiesUpdated
+properties:
+  success:
+    type: boolean
+    description: Whether the rename operation was successful
+  permissionsUpdated:
+    type: integer
+    description: Number of permissions that were updated with the new group name
+  companiesUpdated:
+    type: integer
+    description: Number of companies that had roles updated with the new group name

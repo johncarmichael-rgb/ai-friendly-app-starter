@@ -1,0 +1,15 @@
+type: object
+required:
+  - companyId
+  - userId
+  - role
+properties:
+  companyId:
+    type: string
+    description: Company this member belongs to
+  userId:
+    type: string
+    description: User ID of the member
+  role:
+    type: string
+    description: Role of the member in the company

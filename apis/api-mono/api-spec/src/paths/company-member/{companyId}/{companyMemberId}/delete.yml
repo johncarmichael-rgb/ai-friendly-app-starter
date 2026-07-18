@@ -1,0 +1,3 @@
+parameters:
+  - $ref: ../../../../components/parameters/pathCompanyId.yml
+  - $ref: ../../../../components/parameters/pathCompanyMemberId.yml

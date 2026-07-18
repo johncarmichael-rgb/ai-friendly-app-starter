@@ -1,0 +1,12 @@
+type: object
+description: Update feature properties (code cannot be changed)
+properties:
+  name:
+    type: string
+    description: Display name of the feature
+  description:
+    type: string
+    description: Detailed description of what the feature provides
+  isActive:
+    type: boolean
+    description: Whether the feature is currently available for assignment

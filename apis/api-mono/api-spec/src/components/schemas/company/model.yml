@@ -1,0 +1,31 @@
+allOf:
+  - $ref: ./baseAttributes.yml
+  - type: object
+    required:
+      - _id
+      - domains
+      - createdAt
+      - updatedAt
+      - createdBy
+    properties:
+      _id:
+        type: string
+      domains:
+        type: array
+        description: Verified email domains associated with this company (e.g., ['acme.com']). Added only via the domain-verification flow (or super-admin endpoints); may be empty for self-serve companies on consumer email providers.
+        items:
+          type: string
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+      createdBy:
+        type: string
+      featureCodes:
+        type: array
+        description: Feature codes assigned to this company (managed via admin endpoints only)
+        default: []
+        items:
+          type: string

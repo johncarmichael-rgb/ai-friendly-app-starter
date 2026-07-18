@@ -1,0 +1,15 @@
+parameters:
+  - $ref: ../../../components/parameters/pathCompanyId.yml
+  - $ref: ../../../components/parameters/queryOffset.yml
+  - $ref: ../../../components/parameters/queryLimit.yml
+  - $ref: ../../../components/parameters/querySearch.yml
+  - $ref: ../../../components/parameters/queryRole.yml
+  - $ref: ../../../components/parameters/queryStatus.yml
+  - $ref: ../../../components/parameters/queryIsExternal.yml
+  - $ref: ../../../components/parameters/queryUserId.yml
+responses:
+  '200':
+    content:
+      application/json:
+        schema:
+          $ref: ../../../components/schemas/companyMember/withUser/models.yml

@@ -1,0 +1,14 @@
+parameters:
+  - $ref: ../../../../../components/parameters/pathUserId.yml
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../../../../components/schemas/user/roles/put.yml
+responses:
+  '200':
+    content:
+      application/json:
+        schema:
+          $ref: ../../../../../components/schemas/user/model.yml

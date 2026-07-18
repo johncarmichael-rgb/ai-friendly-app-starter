@@ -1,0 +1,23 @@
+packages:
+  - "apis"
+  - "services"
+  - "admin"
+  - "user-main"
+allowBuilds:
+  '@parcel/watcher': true
+  es5-ext: false
+  esbuild: true
+minimumReleaseAgeExclude:
+  - generate-it@5.63.0
+  - quicktype-core@25.0.0
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - esbuild
+
+# Pin the public hoist pattern to pnpm 8's defaults (what CI uses and what
+# the existing modules layout was created with) so newer local pnpm versions
+# (>=9 default to no public hoisting) don't refuse to install with
+# ERR_PNPM_PUBLIC_HOIST_PATTERN_DIFF.
+publicHoistPattern:
+  - '*eslint*'
+  - '*prettier*'

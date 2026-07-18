@@ -1,0 +1,7 @@
+in: query
+name: domain
+required: false
+schema:
+  type: string
+description: Filter users by email domain (exact match, e.g. ceracare.co.uk)
+example: ceracare.co.uk

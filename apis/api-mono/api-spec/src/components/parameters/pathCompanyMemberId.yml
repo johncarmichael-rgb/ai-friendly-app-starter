@@ -1,0 +1,6 @@
+in: path
+name: companyMemberId
+schema:
+  type: string
+required: true
+description: Company Member ID

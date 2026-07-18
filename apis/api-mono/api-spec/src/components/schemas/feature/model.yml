@@ -1,0 +1,19 @@
+allOf:
+  - $ref: ./baseAttributes.yml
+  - type: object
+    required:
+      - _id
+      - createdAt
+      - updatedAt
+      - createdBy
+    properties:
+      _id:
+        type: string
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+      createdBy:
+        type: string

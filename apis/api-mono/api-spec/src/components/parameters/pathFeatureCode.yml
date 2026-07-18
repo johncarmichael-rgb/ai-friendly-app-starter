@@ -1,0 +1,6 @@
+name: featureCode
+in: path
+required: true
+schema:
+  type: string
+description: Feature code to add or remove

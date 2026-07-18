@@ -1,0 +1,13 @@
+parameters:
+  - $ref: ../../../components/parameters/queryOffset.yml
+  - $ref: ../../../components/parameters/queryLimit.yml
+  - $ref: ../../../components/parameters/querySearch.yml
+  - $ref: ../../../components/parameters/queryCompanyId.yml
+  - $ref: ../../../components/parameters/queryDomain.yml
+  - $ref: ../../../components/parameters/queryRole.yml
+responses:
+  '200':
+    content:
+      application/json:
+        schema:
+          $ref: ../../../components/schemas/user/models.yml

@@ -1,0 +1,9 @@
+type: object
+required:
+  - featureCodes
+properties:
+  featureCodes:
+    type: array
+    description: Complete list of feature codes to assign (replaces existing)
+    items:
+      type: string

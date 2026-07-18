@@ -1,0 +1,102 @@
+services:
+  # PubSub emulator for local socket event messaging
+  pubsub-emulator:
+    container_name: ${IMAGE_PREFIX}pubsub-emulator-dev
+    image: gcr.io/google.com/cloudsdktool/cloud-sdk:emulators
+    command: gcloud beta emulators pubsub start --host-port=0.0.0.0:8085 --project=local-dev
+    ports:
+      - 8085:8085
+    networks:
+      - shared_network
+
+  # STANDARD: Mailhog for dev email purposes
+  mailhog:
+    container_name: ${IMAGE_PREFIX}mailhog-dev
+    image: mailhog/mailhog
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+    ports:
+      - 1025:1025 # smtp server
+      - 8025:8025 # web ui
+    networks:
+      - shared_network
+
+  # STANDARD: Nginx service
+  nginx:
+    container_name: ${IMAGE_PREFIX}nginx-dev
+    image: nginx:1.21.3-alpine
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx/conf.dev.d:/etc/nginx/conf.d
+      - ./nginx/tmp-certs:/etc/nginx/certs:ro
+    networks:
+      - shared_network
+    depends_on:
+      api-mono:
+        condition: service_started
+      api-sockets:
+        condition: service_started
+
+  # APP-SPECIFIC: The monolithic api for this app
+  api-mono:
+    container_name: ${IMAGE_PREFIX}api-mono-dev
+    image: ${IMAGE_PREFIX}mono:latest
+    env_file:
+      - .env
+    environment:
+      # tsc-watch type-checks the full src tree (incl. the generated http/
+      # folder) and can blow past Node's default ~2GB heap — same fix as the
+      # Dockerfile build stage.
+      - NODE_OPTIONS=--max-old-space-size=4096
+      - PUBSUB_EMULATOR_HOST=pubsub-emulator:8085
+      - SOCKET_PUBSUB_PROJECT_ID=local-dev
+      - SOCKET_PUBSUB_TOPIC=socket-events
+      - SOCKET_PUBSUB_CREATE_TOPIC_IF_MISSING=true
+    build:
+      context: apis/api-mono/api/
+      target: dev
+    working_dir: /code
+    volumes:
+      - ./apis/api-mono/api:/code
+      - /code/node_modules
+      # Local frontend builds — FrontendAssetsService serves
+      # frontends/<app>/dist at /users and /admin when NODE_ENV=local.
+      - ./frontends:/code/frontends:ro
+    command: watch
+    networks:
+      - shared_network
+    depends_on:
+      - pubsub-emulator
+
+  # Socket.IO gateway service (subscribes to PubSub, emits to clients)
+  api-sockets:
+    container_name: ${IMAGE_PREFIX}api-sockets-dev
+    image: ${IMAGE_PREFIX}sockets:latest
+    env_file:
+      - .env
+    environment:
+      - PORT=8081
+      - PUBSUB_EMULATOR_HOST=pubsub-emulator:8085
+      - SOCKET_PUBSUB_PROJECT_ID=local-dev
+      - SOCKET_PUBSUB_TOPIC=socket-events
+      - SOCKET_PUBSUB_CREATE_TOPIC_IF_MISSING=true
+      - SOCKET_IO_PATH=/socket/socket-io
+    build:
+      context: apis/api-sockets/
+      target: dev
+    working_dir: /code
+    volumes:
+      - ./apis/api-sockets:/code
+      - /code/node_modules
+    command: watch
+    networks:
+      - shared_network
+    depends_on:
+      - pubsub-emulator
+
+networks:
+  shared_network:

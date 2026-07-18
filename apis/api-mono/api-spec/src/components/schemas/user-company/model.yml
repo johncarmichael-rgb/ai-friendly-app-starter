@@ -1,0 +1,8 @@
+type: object
+properties:
+  user:
+    $ref: ../user/model.yml
+  companyMemberships:
+    type: array
+    items:
+      $ref: ../companyMember/model.yml

@@ -1,0 +1,91 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build outputs
+dist/
+*/dist/
+build/
+*/build/
+
+# Development files
+.git/
+.gitignore
+*.md
+README*
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# dotenv environment variables file
+.env.test
+
+# --- Repo-root build context (apis/claude-runner/Dockerfile) ---------------
+# That image needs ONLY frontends/app-sdk and apis/claude-runner; keep the
+# context small. Subdirectory-context builds (api, sockets) never read this
+# file. NOTE: !re-includes below must stay after the excludes.
+**/node_modules
+**/dist
+**/build
+.claude
+.claude-box
+.github
+deploy
+docs
+frontends/admin
+frontends/apis
+frontends/apps
+frontends/browser-extensions
+frontends/enterprise-management-console
+frontends/enterprise-users
+frontends/landing-pages
+frontends/services
+frontends/shared-components
+frontends/sidebar-loader
+apis/api-mono
+apis/api-sockets
+.env
+.env.*
+
+# Re-includes: the SDK build copies its canonical sources from these paths
+# (app-sdk's copy-sdk-files.js prebuild) — they must survive the excludes above.
+!frontends/sidebar-loader/src/sdk/**
+!frontends/apis/api-mono/services/interfaces/WorkflowsTriggersWorkflowCompanyIdPostPost.ts
+
+# Reference apps baked into the runner image as worked examples for the build
+# agent. Selective (src + package.json + README only) — re-including the whole
+# app dirs would resurrect their node_modules past the **/node_modules rule.
+!frontends/apps/weave-provided-apps/weave-forms-file/src/**
+!frontends/apps/weave-provided-apps/weave-forms-file/package.json
+!frontends/apps/weave-provided-apps/weave-forms-file/README.md
+!frontends/apps/weave-provided-apps/weave-forms-transcript/src/**
+!frontends/apps/weave-provided-apps/weave-forms-transcript/package.json
+!frontends/apps/weave-provided-apps/weave-forms-transcript/README.md
+!frontends/apps/weave-provided-apps/weave-forms-voice/src/**
+!frontends/apps/weave-provided-apps/weave-forms-voice/package.json
+!frontends/apps/weave-provided-apps/weave-forms-voice/README.md

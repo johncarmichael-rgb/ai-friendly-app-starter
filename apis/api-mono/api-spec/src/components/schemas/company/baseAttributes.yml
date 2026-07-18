@@ -1,0 +1,29 @@
+type: object
+required:
+  - name
+properties:
+  name:
+    type: string
+  logo:
+    type: string
+  roles:
+    type: array
+    default: []
+    items:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Display name of the role
+        description:
+          type: string
+          description: Optional description of the role's purpose and permissions
+        permissionGroups:
+          type: array
+          default: []
+          description: List of permission group names granted to this role. Groups are defined by the system owner and contain multiple individual permissions.
+          items:
+            type: string
+            description: Permission group name (e.g., 'Admin', 'User Management', 'Company Management')

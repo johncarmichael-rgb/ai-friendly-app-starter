@@ -1,0 +1,9 @@
+type: object
+required:
+  - featureCodes
+properties:
+  featureCodes:
+    type: array
+    description: List of feature codes assigned to the company
+    items:
+      type: string

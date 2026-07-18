@@ -1,0 +1,367 @@
+name: Deploy Weave Apps - APIs
+
+on:
+  workflow_dispatch:
+    inputs:
+      environments:
+        description: 'JSON array of envs, e.g. ["dev"] or ["dev","prod"]'
+        type: string
+        required: true
+        default: '["dev"]'
+      runner:
+        description: 'Runner label override (defaults to env name)'
+        type: string
+        required: false
+
+  pull_request:
+    branches: [develop, main, feat/auth0]
+    paths:
+      - 'apis/api-mono/**'
+      - 'apis/api-sockets/**'
+      - 'deploy/weave-apps/**'
+      - '.github/weave-apps-matrix.json'
+      - '.github/workflows/deploy-weave-apps.yml'
+
+  push:
+    branches: [develop, main, feat/auth0]
+    paths:
+      - 'apis/api-mono/**'
+      - 'apis/api-sockets/**'
+      - 'deploy/weave-apps/**'
+      - '.github/weave-apps-matrix.json'
+      - '.github/workflows/deploy-weave-apps.yml'
+
+concurrency:
+  # Serialize by target env (main -> prod, anything else -> dev) so concurrent
+  # pushes across branches (develop, feat/auth0) don't race against the same
+  # TF state and produce stale-plan errors. PR events are scoped per head_ref
+  # so plan reruns cancel themselves on rapid pushes; push events queue.
+  group: >-
+    ${{ github.workflow }}-${{
+      github.event_name == 'pull_request' && format('pr-{0}', github.head_ref) ||
+      (github.ref == 'refs/heads/main' && 'prod' || 'dev')
+    }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+jobs:
+  determine-targets:
+    name: Determine deploy targets
+    runs-on: ubuntu-latest
+    outputs:
+      environments: ${{ steps.set.outputs.environments }}
+    steps:
+      - id: set
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo 'environments=${{ inputs.environments }}' >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo 'environments=["prod"]' >> $GITHUB_OUTPUT
+          else
+            echo 'environments=["dev"]' >> $GITHUB_OUTPUT
+          fi
+
+  matrix-setup:
+    name: Resolve service matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: set-matrix
+        run: |
+          {
+            echo 'matrix<<EOF'
+            cat .github/weave-apps-matrix.json
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+  build-push:
+    needs: [matrix-setup, determine-targets]
+    strategy:
+      matrix: ${{ fromJson(needs.matrix-setup.outputs.matrix) }}
+      fail-fast: false
+    name: Build + push ${{ matrix.name }}
+    uses: ./.github/workflows/_build-push.yml
+    with:
+      run_id: ${{ github.run_id }}
+      working_directory: ${{ matrix.working_dir }}
+      dockerfile: ${{ matrix.dockerfile }}
+      imagename: ${{ matrix.name }}
+      environments: ${{ needs.determine-targets.outputs.environments }}
+    secrets: inherit
+
+  tf-plan:
+    name: Terraform Plan (${{ matrix.environment }})
+    needs: [determine-targets]
+    runs-on: ${{ inputs.runner == null && matrix.environment || inputs.runner }}
+    strategy:
+      max-parallel: 1
+      matrix:
+        environment: ${{ fromJSON(needs.determine-targets.outputs.environments) }}
+    defaults:
+      run:
+        working-directory: deploy/weave-apps
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup GCP Credentials
+        uses: google-github-actions/auth@v3
+        with:
+          create_credentials_file: true
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: sa-ci-cd@cera-management.iam.gserviceaccount.com
+          project_id: cera-management
+
+      - name: Setup Terraform
+        run: tfenv use
+
+      - name: Terraform Init
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: |
+          terraform init \
+            -backend-config="prefix=environments/${{ matrix.environment }}/cera-weave-apps/api"
+
+      - name: Terraform Validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: |
+          LOCK_FLAG=""
+          [ "${{ github.event_name }}" = "pull_request" ] && LOCK_FLAG="-lock=false"
+
+          terraform plan -no-color -input=false ${LOCK_FLAG} \
+            -var "repo_name=${{ github.event.repository.name }}" \
+            -var-file="envs/${{ matrix.environment }}.tfvars" \
+            -out=plan.${{ matrix.environment }}.tfplan
+        continue-on-error: true
+
+      - name: Plan summary
+        if: always()
+        shell: bash
+        run: |
+          if [ -f plan.${{ matrix.environment }}.tfplan ]; then
+            PLAN_OUTPUT=$(terraform show -no-color plan.${{ matrix.environment }}.tfplan 2>/dev/null || echo "(plan file unreadable)")
+          else
+            PLAN_OUTPUT="(no plan file produced — see logs)"
+          fi
+
+          SUMMARY_LINE=$(echo "$PLAN_OUTPUT" | grep -E '^Plan: ' | tail -1 || true)
+
+          case "${{ steps.plan.outcome }}" in
+            success) RESULT="✅ No changes${SUMMARY_LINE:+ — ${SUMMARY_LINE#Plan: }}" ;;
+            failure) RESULT="❌ Plan failed" ;;
+            *) RESULT="📝 Changes detected${SUMMARY_LINE:+ — ${SUMMARY_LINE#Plan: }}" ;;
+          esac
+
+          {
+            echo "### 📋 Terraform Plan — \`${{ matrix.environment }}\` (weave-apps)"
+            echo ""
+            echo "- **Module**: \`deploy/weave-apps\`"
+            echo "- **Environment**: \`${{ matrix.environment }}\`"
+            echo "- **Result**: ${RESULT}"
+            echo ""
+            echo "<details><summary>Show plan</summary>"
+            echo ""
+            echo '```terraform'
+            echo "$PLAN_OUTPUT"
+            echo '```'
+            echo ""
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload tf plan
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v6
+        with:
+          name: plan.weave-apps.${{ matrix.environment }}.tfplan
+          path: deploy/weave-apps/plan.${{ matrix.environment }}.tfplan
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: PR Comment
+        uses: actions/github-script@v8
+        if: always() && github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs')
+            const run_url = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
+            let plan = ''
+            try {
+              const planPath = `deploy/weave-apps/plan.${{ matrix.environment }}.tfplan`
+              if (fs.existsSync(planPath)) {
+                const { execSync } = require('child_process')
+                plan = execSync(`terraform -chdir=deploy/weave-apps show -no-color plan.${{ matrix.environment }}.tfplan`).toString()
+              }
+            } catch (e) {
+              plan = `(plan unreadable — see ${run_url})`
+            }
+            const truncated = plan.length > 60000 ? plan.substring(0, 60000) + '\n... (truncated, see Actions run)' : plan
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            })
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('Terraform Plan — weave-apps (${{ matrix.environment }})')
+            )
+            const output = `#### Terraform Plan — weave-apps (${{ matrix.environment }}) \`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`terraform\n${truncated}\n\`\`\`
+            </details>
+
+            *Pushed by: @${{ github.actor }}*`
+
+            if (botComment) {
+              github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
+              })
+            } else {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            }
+
+      - name: Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+  tf-apply:
+    name: Terraform Apply (${{ matrix.environment }})
+    needs: [determine-targets, build-push, tf-plan]
+    if: github.event_name != 'pull_request'
+    runs-on: ${{ inputs.runner == null && matrix.environment || inputs.runner }}
+    strategy:
+      max-parallel: 1
+      matrix:
+        environment: ${{ fromJSON(needs.determine-targets.outputs.environments) }}
+    environment: ${{ matrix.environment }}
+    defaults:
+      run:
+        working-directory: deploy/weave-apps
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup GCP Credentials
+        uses: google-github-actions/auth@v3
+        with:
+          create_credentials_file: true
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: sa-ci-cd@cera-management.iam.gserviceaccount.com
+          project_id: cera-management
+
+      - name: Setup Terraform
+        run: tfenv use
+
+      - name: Download tf plan
+        uses: actions/download-artifact@v8
+        with:
+          name: plan.weave-apps.${{ matrix.environment }}.tfplan
+          path: deploy/weave-apps
+
+      - name: Terraform Init
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: |
+          terraform init \
+            -backend-config="prefix=environments/${{ matrix.environment }}/cera-weave-apps/api"
+
+      - name: Terraform Apply
+        id: apply
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: terraform apply -input=false plan.${{ matrix.environment }}.tfplan
+
+      - name: Apply summary
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.apply.outcome }}" = "success" ]; then
+            RESULT="✅ Applied"
+          else
+            RESULT="❌ Apply failed"
+          fi
+          {
+            echo "### 🚀 Terraform Apply — \`${{ matrix.environment }}\` (weave-apps)"
+            echo ""
+            echo "- **Module**: \`deploy/weave-apps\`"
+            echo "- **Environment**: \`${{ matrix.environment }}\`"
+            echo "- **Result**: ${RESULT}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-cloudrun:
+    name: Deploy Cloud Run ${{ matrix.service.name }} (${{ matrix.environment }})
+    needs: [determine-targets, matrix-setup, build-push, tf-apply]
+    if: github.event_name != 'pull_request'
+    runs-on: ${{ inputs.runner == null && matrix.environment || inputs.runner }}
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        environment: ${{ fromJSON(needs.determine-targets.outputs.environments) }}
+        service: ${{ fromJson(needs.matrix-setup.outputs.matrix).include }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup GCP Credentials
+        uses: google-github-actions/auth@v3
+        with:
+          create_credentials_file: true
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: sa-ci-cd@cera-management.iam.gserviceaccount.com
+          project_id: cera-management
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Deploy Cloud Run image bump
+        id: deploy
+        env:
+          IMAGE_REPO: europe-west2-docker.pkg.dev/cera-${{ matrix.environment }}-shared/cera/${{ matrix.environment }}_${{ matrix.service.name }}
+        run: |
+          gcloud run services update ${{ matrix.environment }}-${{ matrix.service.name }} \
+            --image=${IMAGE_REPO}:${{ github.run_id }} \
+            --region=europe-west2 \
+            --project=cera-${{ matrix.environment }}-weave-apps \
+            --impersonate-service-account=sa-terraform@cera-${{ matrix.environment }}-weave-apps.iam.gserviceaccount.com \
+            --quiet
+
+      - name: Deploy summary
+        if: always()
+        shell: bash
+        env:
+          IMAGE_REPO: europe-west2-docker.pkg.dev/cera-${{ matrix.environment }}-shared/cera/${{ matrix.environment }}_${{ matrix.service.name }}
+        run: |
+          if [ "${{ steps.deploy.outcome }}" = "success" ]; then
+            RESULT="✅ Deployed"
+          else
+            RESULT="❌ Deploy failed"
+          fi
+
+          {
+            echo "### 🚀 Cloud Run Deploy — \`${{ matrix.environment }}-${{ matrix.service.name }}\`"
+            echo ""
+            echo "- **Service**: \`${{ matrix.environment }}-${{ matrix.service.name }}\`"
+            echo "- **Image**: \`${IMAGE_REPO}:${{ github.run_id }}\`"
+            echo "- **Region**: \`europe-west2\`"
+            echo "- **Project**: \`cera-${{ matrix.environment }}-weave-apps\`"
+            echo "- **Result**: ${RESULT}"
+          } >> "$GITHUB_STEP_SUMMARY"

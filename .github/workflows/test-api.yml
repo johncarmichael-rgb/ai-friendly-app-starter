@@ -1,0 +1,21 @@
+name: Test API
+
+on:
+  pull_request:
+    branches: [develop, main]
+    paths:
+      - 'apis/**'
+      - '.github/workflows/test-api.yml'
+      - '.github/workflows/_test.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: test-api-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Run API Tests
+    uses: ./.github/workflows/_test.yml
+    with:
+      test_api: true

@@ -1,0 +1,195 @@
+name: Deploy Weave Apps - Frontends
+
+on:
+  workflow_dispatch:
+    inputs:
+      environments:
+        description: 'JSON array of envs, e.g. ["dev"] or ["dev","prod"]'
+        type: string
+        required: true
+        default: '["dev"]'
+
+  pull_request:
+    branches: [develop, main, feat/auth0]
+    paths:
+      - 'frontends/admin/**'
+      - 'frontends/user-main/**'
+      - 'frontends/services/**'
+      - 'frontends/apis/**'
+      - '.github/workflows/deploy-weave-apps-frontends.yml'
+
+  push:
+    branches: [develop, main, feat/auth0]
+    paths:
+      - 'frontends/admin/**'
+      - 'frontends/user-main/**'
+      - 'frontends/services/**'
+      - 'frontends/apis/**'
+      - '.github/workflows/deploy-weave-apps-frontends.yml'
+
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{
+      github.event_name == 'pull_request' && format('pr-{0}', github.head_ref) ||
+      (github.ref == 'refs/heads/main' && 'prod' || 'dev')
+    }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  determine-targets:
+    name: Determine deploy targets
+    runs-on: ubuntu-latest
+    outputs:
+      environments: ${{ steps.set.outputs.environments }}
+    steps:
+      - id: set
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo 'environments=${{ inputs.environments }}' >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo 'environments=["prod"]' >> $GITHUB_OUTPUT
+          else
+            echo 'environments=["dev"]' >> $GITHUB_OUTPUT
+          fi
+
+  test:
+    name: Run Tests
+    uses: ./.github/workflows/_test.yml
+    with:
+      test_frontends: true
+
+  detect-changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      admin: ${{ steps.set-all.outputs.admin || steps.filter.outputs.admin }}
+      user_main: ${{ steps.set-all.outputs.user_main || steps.filter.outputs.user_main }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set all to true for manual dispatch
+        id: set-all
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "admin=true" >> $GITHUB_OUTPUT
+          echo "user_main=true" >> $GITHUB_OUTPUT
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        if: github.event_name != 'workflow_dispatch'
+        with:
+          base: ${{ github.event.before }}
+          filters: |
+            admin:
+              - 'frontends/admin/**'
+              - 'frontends/services/**'
+              - 'frontends/apis/**'
+            user_main:
+              - 'frontends/user-main/**'
+              - 'frontends/services/**'
+              - 'frontends/apis/**'
+
+  deploy:
+    name: Deploy ${{ matrix.frontend.name }} (${{ matrix.environment }})
+    needs: [test, detect-changes, determine-targets]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ${{ fromJSON(needs.determine-targets.outputs.environments) }}
+        frontend:
+          - name: admin
+            folder: admin
+            bucket_path: admin
+            changed: ${{ needs.detect-changes.outputs.admin }}
+            build: true
+          - name: user-main
+            folder: user-main
+            bucket_path: user-main
+            changed: ${{ needs.detect-changes.outputs.user_main }}
+            build: true
+    environment: ${{ matrix.environment }}
+    steps:
+      - name: Checkout code
+        if: matrix.frontend.changed == 'true'
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        if: matrix.frontend.changed == 'true' && matrix.frontend.build == true
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Setup pnpm
+        if: matrix.frontend.changed == 'true' && matrix.frontend.build == true
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Install dependencies
+        if: matrix.frontend.changed == 'true' && matrix.frontend.build == true
+        working-directory: frontends
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build ${{ matrix.frontend.name }}
+        if: matrix.frontend.changed == 'true' && matrix.frontend.build == true
+        working-directory: frontends/${{ matrix.frontend.folder }}
+        run: |
+          # Copy per-environment .env file if it exists
+          if [ -f ".env.${{ matrix.environment }}" ]; then
+            cp .env.${{ matrix.environment }} .env.production
+            echo "Using .env.${{ matrix.environment }} for build"
+          fi
+          cd ../..
+          pnpm --filter ${{ matrix.frontend.folder }} run build
+        env:
+          NODE_ENV: production
+
+      - name: Setup GCP Credentials
+        if: matrix.frontend.changed == 'true'
+        uses: google-github-actions/auth@v3
+        with:
+          create_credentials_file: true
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: sa-ci-cd@cera-management.iam.gserviceaccount.com
+          project_id: cera-management
+
+      - name: Setup gcloud
+        if: matrix.frontend.changed == 'true'
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Deploy ${{ matrix.frontend.name }} to GCS
+        id: deploy
+        if: matrix.frontend.changed == 'true'
+        env:
+          BUCKET: ${{ matrix.environment }}-weave-apps-frontend
+          SA: sa-terraform@cera-${{ matrix.environment }}-weave-apps.iam.gserviceaccount.com
+        run: |
+          gsutil -i ${SA} -m rm -r gs://${BUCKET}/${{ matrix.frontend.bucket_path }}/** || true
+          gsutil -i ${SA} -m cp -r ./frontends/${{ matrix.frontend.folder }}/dist/* gs://${BUCKET}/${{ matrix.frontend.bucket_path }}/
+
+      - name: Deploy summary
+        if: always() && matrix.frontend.changed == 'true'
+        shell: bash
+        env:
+          BUCKET: ${{ matrix.environment }}-weave-apps-frontend
+        run: |
+          if [ "${{ steps.deploy.outcome }}" = "success" ]; then
+            RESULT="✅ Deployed"
+          else
+            RESULT="❌ Deploy failed"
+          fi
+
+          {
+            echo "### 📦 Frontend Deploy — \`${{ matrix.frontend.name }}\` (\`${{ matrix.environment }}\`)"
+            echo ""
+            echo "- **Bucket**: \`gs://${BUCKET}/${{ matrix.frontend.bucket_path }}/\`"
+            echo "- **Result**: ${RESULT}"
+          } >> "$GITHUB_STEP_SUMMARY"

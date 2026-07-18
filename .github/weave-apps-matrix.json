@@ -1,0 +1,16 @@
+{
+  "include": [
+    {
+      "name": "weave-apps-api",
+      "type": "service",
+      "working_dir": "./apis/api-mono/api",
+      "dockerfile": "./apis/api-mono/api/Dockerfile"
+    },
+    {
+      "name": "weave-apps-socket",
+      "type": "service",
+      "working_dir": "./apis/api-sockets",
+      "dockerfile": "./apis/api-sockets/Dockerfile"
+    }
+  ]
+}

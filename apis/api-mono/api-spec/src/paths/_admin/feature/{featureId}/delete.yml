@@ -1,0 +1,8 @@
+parameters:
+  - $ref: ../../../../components/parameters/pathFeatureId.yml
+responses:
+  '200':
+    content:
+      application/json:
+        schema:
+          $ref: ../../../../components/schemas/generic/deleteSuccess.yml

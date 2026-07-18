@@ -1,0 +1,13 @@
+type: object
+required:
+  - companyMember
+  - user
+properties:
+  companyMember:
+    $ref: ../model.yml
+  user:
+    $ref: ../../user/model.yml
+
+
+
+

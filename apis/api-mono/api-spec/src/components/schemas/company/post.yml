@@ -1,0 +1,11 @@
+allOf:
+  - $ref: ./baseAttributes.yml
+  - type: object
+    required:
+      - domains
+    properties:
+      domains:
+        type: array
+        description: Email domains associated with this company (e.g., ['acme.com', 'acme.co.uk']). Super-admin create only; may be empty.
+        items:
+          type: string

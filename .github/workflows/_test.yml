@@ -1,0 +1,74 @@
+name: Run Tests
+
+on:
+  workflow_call:
+    inputs:
+      test_api:
+        description: "Run API tests"
+        type: boolean
+        default: false
+      test_frontends:
+        description: "Run frontend tests (admin, user-main, services, apis)"
+        type: boolean
+        default: false
+      runner:
+        description: "Name of the agent to run the job on"
+        type: string
+        default: "ubuntu-latest"
+
+jobs:
+  test-api:
+    if: inputs.test_api
+    runs-on: ${{ inputs.runner }}
+    name: API Tests
+    defaults:
+      run:
+        working-directory: apis/api-mono/api
+    env:
+      # ESLint runs type-aware (@typescript-eslint parserOptions.project), so
+      # it holds the whole TS program — including the generated http/ types —
+      # in memory. The runner's default Node heap (~2GB) OOMs on it (exit
+      # 134); ubuntu-latest has 7GB, so give lint + ts-jest real headroom.
+      NODE_OPTIONS: --max-old-space-size=4096
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+  test-frontends:
+    if: inputs.test_frontends
+    runs-on: ${{ inputs.runner }}
+    name: Frontend Tests
+    defaults:
+      run:
+        working-directory: frontends
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Run tests (all frontend packages with a test script)
+        run: pnpm --recursive --if-present run test

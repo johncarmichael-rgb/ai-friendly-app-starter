@@ -1,0 +1,18 @@
+type: object
+required:
+  - code
+  - name
+properties:
+  code:
+    type: string
+    description: Unique identifier code for the feature (e.g., 'ai_assistant', 'workflow_automation')
+  name:
+    type: string
+    description: Display name of the feature
+  description:
+    type: string
+    description: Detailed description of what the feature provides
+  isActive:
+    type: boolean
+    default: true
+    description: Whether the feature is currently available for assignment

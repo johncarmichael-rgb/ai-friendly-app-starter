@@ -1,0 +1,8 @@
+type: object
+properties:
+  name:
+    type: string
+    description: Human-readable name of the permission
+  group:
+    type: string
+    description: Group name for organizing permissions (e.g., 'Company Management', 'User Management')

@@ -1,0 +1,6 @@
+in: query
+name: companyId
+schema:
+  type: string
+required: false
+description: Filter users by company ID

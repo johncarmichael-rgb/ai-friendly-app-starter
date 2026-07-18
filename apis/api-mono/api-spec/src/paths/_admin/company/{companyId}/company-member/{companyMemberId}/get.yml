@@ -1,0 +1,9 @@
+parameters:
+  - $ref: ../../../../../../components/parameters/pathCompanyId.yml
+  - $ref: ../../../../../../components/parameters/pathCompanyMemberId.yml
+responses:
+  '200':
+    content:
+      application/json:
+        schema:
+          $ref: ../../../../../../components/schemas/companyMember/model.yml

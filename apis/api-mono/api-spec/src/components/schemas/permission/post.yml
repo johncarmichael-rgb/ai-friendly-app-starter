@@ -1,0 +1,14 @@
+type: object
+required:
+  - code
+  - name
+properties:
+  code:
+    type: string
+    description: Unique permission code for the custom permission
+  name:
+    type: string
+    description: Human-readable name of the permission
+  group:
+    type: string
+    description: Group name for organizing permissions (e.g., 'Company Management', 'User Management')

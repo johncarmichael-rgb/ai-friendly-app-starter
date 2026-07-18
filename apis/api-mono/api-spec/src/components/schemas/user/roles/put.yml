@@ -1,0 +1,13 @@
+type: object
+required:
+  - roles
+properties:
+  roles:
+    type: array
+    description: >-
+      System-level roles for the user. An empty array means a standard user
+      with no system privileges; ['SUPER_ADMIN'] grants full platform admin.
+    items:
+      type: string
+      enum:
+        - SUPER_ADMIN
