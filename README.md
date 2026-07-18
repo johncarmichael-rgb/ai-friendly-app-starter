@@ -13,6 +13,30 @@ A monorepo starter for a multi-tenant SaaS app: WorkOS AuthKit authentication, r
 └── .github/workflows/       # CI/CD pipelines
 ```
 
+## Initial Setup (run once per new project)
+
+This repository is a skeleton. When starting a new project from it, ask Claude (e.g. Claude Code) to run through the following initial setup. Claude should complete these steps in order:
+
+### 1. Rebrand the GitHub workflows and actions
+
+- Go through every file in `.github/workflows/` (and `.github/actions/` if present).
+- Rename workflow files, workflow `name:` fields, job names, and any environment/deployment identifiers that reference the skeleton (e.g. `app-skeleton`, `app_skeleton`, `App Skeleton`) so they make sense for the current project.
+- Check for skeleton naming in artifact names, Docker image tags, GCP service names, and cache keys within the workflows, and update those too.
+
+### 2. Fix the Docker env naming
+
+- Update `.env.example` (and `.env` if it exists) so any variable values, container names, database names, project IDs, or comments referencing `app-skeleton` are renamed to the current project.
+- Do the same in `docker-compose.dev.yml` and any other compose files: service names, container names, network names, volume names, and image tags should reflect the current project, not the skeleton.
+- Double-check that renamed values stay consistent across `.env.example`, the compose files, `nginx/` config, and the `Makefile`.
+
+### 3. Build a general understanding of the codebase
+
+- Read through the whole repository to get a working mental model of it: the API (`apis/api-mono/`), the sockets gateway (`apis/api-sockets/`), the frontend workspace (`frontends/`), the Terraform infrastructure (`deploy/`), the Nginx proxy (`nginx/`), and the CI/CD pipelines (`.github/workflows/`).
+- Pay particular attention to the API-first generation loop (BOATS spec → GenerateIt server stubs → frontend consumer generation) described below, since most feature work flows through it.
+- Summarise the architecture back to the developer, flagging anything that still carries skeleton naming or looks like it needs project-specific configuration (WorkOS keys, `SUPER_ADMIN_EMAILS`, GCP/Atlas settings in Terraform, etc.).
+
+Once these three steps are done, the project is considered initialised and normal development can begin.
+
 ## Documentation-Driven Development
 
 This project follows **API-first development** using:
@@ -78,12 +102,3 @@ Then open https://localhost/users. The admin console at https://localhost/admin 
 | `make down`  | Stop all services                    |
 | `make logs`  | Tail service logs                    |
 | `make reset` | Stop, remove volumes, and restart    |
-
-### Services
-
-| Service | URL                    | Description                |
-| ------- | ---------------------- | -------------------------- |
-| App     | https://localhost/users | Main user app (via Nginx)  |
-| Admin   | https://localhost/admin | Admin console (via Nginx)  |
-| API     | https://localhost/api  | Backend API (via Nginx)    |
-| Mailhog | http://localhost:8025  | Dev email UI               |
